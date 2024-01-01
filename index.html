@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- left-container -->
+      <div class="left-container">
+        <div class="current-info">
+          <div class="components humidity">
+            <div>
+              <img src="images/humidity.png" alt="" />
+            </div>
+            <div>
+              <p class="value">- -</p>
+              <p class="name">Humidity</p>
+            </div>
+          </div>
+          <div class="components windspeed">
+            <div>
+              <img src="images/windspeed.png" alt="" />
+            </div>
+            <div>
+              <p class="value">- -</p>
+              <p class="name">Windspeed</p>
+            </div>
+          </div>
+          <div class="components visibility">
+            <div>
+              <img src="images/visibility.png" alt="" />
+            </div>
+            <div>
+              <p class="value">- -</p>
+              <p class="name">Visibility</p>
+            </div>
+          </div>
+          <div class="components pressure">
+            <div>
+              <img src="images/pressure.png" alt="" />
+            </div>
+            <div>
+              <p class="value">- -</p>
+              <p class="name">Pressure</p>
+            </div>
+          </div>
+          <div class="components feelslike">
+            <div>
+              <img src="images/feelslike.png" alt="" />
+            </div>
+            <div>
+              <p class="value">- -</p>
+              <p class="name">Feelslike</p>
+            </div>
+          </div>
+          <div class="components sealevel">
+            <div>
+              <img src="images/sealevel.png" alt="" />
+            </div>
+            <div>
+              <p class="value">- -</p>
+              <p class="name">Sealevel</p>
+            </div>
+          </div>
+        </div>
+        <div class="future-info">
+          <h3>HOURLY FORECAST</h3>
+          <div class="hourly first"></div>
+          <div class="hourly second"></div>
+          <div class="hourly third"></div>
+          <div class="hourly fourth"></div>
+          <h3>DAILY FORECAST</h3>
+          <div class="daily first"></div>
+          <div class="daily second"></div>
+          <div class="daily third"></div>
+          <div class="daily fourth"></div>
+        </div>
+      </div>
+      <!-- right-container -->
+      <div class="right-container">
+        <!-- search bar   -->
+        <div class="search">
+          <img class="map-icon" src="images/map-solid-24.png" alt="" />
+          <input type="text" id="search-bar" placeholder="Search the City" />
+          <button onclick="displayWeather()">
+            <img class="search-icon" src="images/search.png" alt="not found" />
+          </button>
+        </div>
+        <!-- weather -->
+        <div class="weather">
+          <div class="box">
+            <img src="images/clouds.png" alt="not found" />
+            <h1 class="temperature">21°C</h1>
+            <h1 class="city">LN Puram</h1>
+            <div class="info">
+              <p class="date"></p>
+              <p class="time"></p>
+            </div>
+            <div class="info">
+              <p id="currentDate"></p>
+              <p id="currentTime"></p>
+            </div>
+          </div>
+          
+        </div>
+       
+        <div class="not-found">
+          <div class="box">
+            <p class="city"></p>
+            <img src="images/404.png" alt="" />
+            <p>Opps! Location not found</p>
+          </div>
+        </div>
+      </div>
+      <!-- right-container end   -->
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
