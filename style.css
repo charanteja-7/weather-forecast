@@ -35,7 +35,7 @@
 :root {
   --text: #ffffff;
   --text-2: rgba(255, 255, 255, 0.92);
-  --text-3: rgba(255, 255, 255, 0.82);
+  --text-3: rgba(255, 255, 255, 0.92);
   --hairline: rgba(255, 255, 255, 0.16);
   --rain-tint: #8fdcff;
   --ink: #24121f;
@@ -47,8 +47,8 @@
       rgba(255, 255, 255, 0.04) 52%,
       rgba(255, 255, 255, 0.09) 100%
     ),
-    linear-gradient(rgba(45, 12, 40, 0.2), rgba(45, 12, 40, 0.2));
-  --glass-blur: blur(34px) saturate(165%) brightness(0.74);
+    linear-gradient(rgba(45, 12, 40, 0.24), rgba(45, 12, 40, 0.24));
+  --glass-blur: blur(34px) saturate(160%) brightness(0.68);
   --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42),
     inset 0 -1px 0 rgba(40, 10, 35, 0.14),
     0 1px 2px rgba(40, 10, 35, 0.08), 0 22px 50px -22px rgba(40, 10, 35, 0.5);
@@ -71,6 +71,7 @@
 
   --rain-opacity: 0;
   --cloud-opacity: 0.35;
+  --cloud-tint: rgba(255, 238, 230, 0.3);
   --star-opacity: 0;
   --earth-opacity: 0;
   --glow-opacity: 1;
@@ -90,6 +91,7 @@ body[data-weather="partly"] {
   --glow-opacity: 0.75;
 }
 body[data-weather="cloud"] {
+  --cloud-tint: rgba(225, 210, 205, 0.26);
   --sky-top: #241d1b;
   --sky-mid: #4a3c36;
   --sky-low: #62504a;
@@ -101,6 +103,7 @@ body[data-weather="cloud"] {
   --glow-opacity: 0.45;
 }
 body[data-weather="fog"] {
+  --cloud-tint: rgba(230, 225, 222, 0.24);
   --sky-top: #2a2725;
   --sky-mid: #4e4844;
   --sky-low: #625a55;
@@ -108,10 +111,11 @@ body[data-weather="fog"] {
   --blob-b: rgba(150, 140, 135, 0.3);
   --blob-c: rgba(255, 245, 235, 0.3);
   --glow: rgba(255, 248, 240, 0.3);
-  --cloud-opacity: 1;
+  --cloud-opacity: 0.45;
   --glow-opacity: 0.4;
 }
 body[data-weather="rain"] {
+  --cloud-tint: rgba(190, 180, 192, 0.32);
   --sky-top: #18171c;
   --sky-mid: #33303a;
   --sky-low: #47424e;
@@ -124,6 +128,7 @@ body[data-weather="rain"] {
   --glow-opacity: 0.35;
 }
 body[data-weather="storm"] {
+  --cloud-tint: rgba(28, 20, 36, 0.78);
   --sky-top: #120a1c;
   --sky-mid: #2a1640;
   --sky-low: #402058;
@@ -132,10 +137,11 @@ body[data-weather="storm"] {
   --blob-c: rgba(255, 180, 90, 0.14);
   --glow: rgba(220, 190, 255, 0.22);
   --rain-opacity: 1;
-  --cloud-opacity: 0.45;
+  --cloud-opacity: 0.95;
   --glow-opacity: 0.4;
 }
 body[data-weather="snow"] {
+  --cloud-tint: rgba(245, 240, 250, 0.26);
   --sky-top: #2f2a3c;
   --sky-mid: #4f465e;
   --sky-low: #60556c;
@@ -180,6 +186,8 @@ body[data-day="night"][data-weather="snow"] {
   --blob-b: rgba(120, 120, 135, 0.08);
   --blob-c: rgba(200, 200, 210, 0.05);
   --glow: rgba(220, 222, 230, 0.1);
+  --cloud-tint: rgba(70, 70, 82, 0.5);
+  --cloud-opacity: 0.75;
   --star-opacity: 0.15;
   --earth-opacity: 0;
   --glow-opacity: 0.35;
@@ -325,22 +333,31 @@ svg {
   animation: drift-three 52s ease-in-out infinite alternate;
 }
 .ambient-cloud {
-  width: 80vmax;
-  height: 26vmax;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(255, 228, 214, 0.3) 0%, rgba(255, 228, 214, 0.1) 40%, transparent 70%);
+  --s: 1;
+  top: 4vh;
+  left: 0;
+  width: calc(52vmax * var(--s));
+  height: calc(20vmax * var(--s));
+  background: radial-gradient(circle calc(7vmax * var(--s)) at 24% 66%, var(--cloud-tint) 97%, transparent),
+    radial-gradient(circle calc(10vmax * var(--s)) at 42% 48%, var(--cloud-tint) 97%, transparent),
+    radial-gradient(circle calc(8.5vmax * var(--s)) at 62% 52%, var(--cloud-tint) 97%, transparent),
+    radial-gradient(circle calc(6vmax * var(--s)) at 78% 68%, var(--cloud-tint) 97%, transparent);
+  filter: blur(14px);
   opacity: var(--cloud-opacity);
   transition: opacity 1.4s ease;
-}
-.cloud-one {
-  top: 6vh;
-  left: -30vw;
-  animation: cloud-drift 90s linear infinite alternate;
+  animation: cloud-cross 170s linear infinite;
 }
 .cloud-two {
-  top: 54vh;
-  right: -34vw;
-  animation: cloud-drift 120s linear infinite alternate-reverse;
+  --s: 0.7;
+  top: 32vh;
+  animation-duration: 240s;
+  animation-delay: -150s;
+}
+.cloud-three {
+  --s: 1.25;
+  top: 60vh;
+  animation-duration: 300s;
+  animation-delay: -70s;
 }
 .ambient-rain {
   inset: 0;
@@ -365,6 +382,138 @@ svg {
   opacity: 0.6;
   animation: rain-sheet-far 1.1s linear infinite;
 }
+/* Weather scenes: each layer only renders for its own conditions. */
+.ambient-weather .ambient-sun,
+.ambient-weather .ambient-fog,
+.ambient-weather .ambient-snow,
+.ambient-weather .ambient-drops,
+.ambient-weather .ambient-bolt,
+.ambient-weather .ambient-meteor {
+  display: none;
+}
+.ambient-sun {
+  top: -19vmax;
+  right: -13vmax;
+  width: 46vmax;
+  height: 46vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 251, 240, 0.85) 0 9%, rgba(255, 222, 150, 0.5) 14%, rgba(255, 180, 100, 0.14) 32%, transparent 60%);
+}
+.ambient-sun::before {
+  position: absolute;
+  inset: -40%;
+  content: "";
+  background: repeating-conic-gradient(rgba(255, 232, 190, 0.1) 0deg 3deg, transparent 3deg 15deg);
+  -webkit-mask-image: radial-gradient(circle, #000 14%, transparent 60%);
+  mask-image: radial-gradient(circle, #000 14%, transparent 60%);
+  animation: sky-turn 200s linear infinite;
+}
+body[data-day="day"][data-weather="clear"] .ambient-sun {
+  display: block;
+}
+body[data-day="day"][data-weather="partly"] .ambient-sun {
+  display: block;
+  opacity: 0.7;
+}
+.ambient-fog {
+  inset: 0;
+  overflow: hidden;
+}
+.ambient-fog::before,
+.ambient-fog::after {
+  position: absolute;
+  left: 0;
+  width: 200%;
+  content: "";
+  background: radial-gradient(ellipse 22% 45% at 25% 60%, rgba(245, 238, 232, 0.26), transparent 70%),
+    radial-gradient(ellipse 18% 40% at 72% 42%, rgba(245, 238, 232, 0.22), transparent 70%);
+  background-size: 50% 100%;
+  filter: blur(10px);
+  animation: fog-roll 80s linear infinite;
+}
+.ambient-fog::before {
+  bottom: -6%;
+  height: 56%;
+}
+.ambient-fog::after {
+  top: 14%;
+  height: 42%;
+  opacity: 0.65;
+  animation-duration: 130s;
+  animation-direction: reverse;
+}
+body[data-weather="fog"] .ambient-fog {
+  display: block;
+}
+.ambient-snow {
+  inset: 0;
+  overflow: hidden;
+}
+.ambient-snow::before,
+.ambient-snow::after {
+  position: absolute;
+  top: -520px;
+  left: -10%;
+  width: 120%;
+  height: calc(100% + 1040px);
+  content: "";
+}
+.ambient-snow::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ccircle cx='71' cy='163' r='1.5' fill='white' opacity='0.79'/%3E%3Ccircle cx='188' cy='20' r='1.0' fill='white' opacity='0.88'/%3E%3Ccircle cx='78' cy='70' r='2.4' fill='white' opacity='0.74'/%3E%3Ccircle cx='251' cy='143' r='1.9' fill='white' opacity='0.61'/%3E%3Ccircle cx='190' cy='260' r='1.7' fill='white' opacity='0.85'/%3E%3Ccircle cx='201' cy='19' r='2.1' fill='white' opacity='0.79'/%3E%3Ccircle cx='90' cy='9' r='2.2' fill='white' opacity='0.74'/%3E%3Ccircle cx='216' cy='264' r='2.0' fill='white' opacity='0.92'/%3E%3Ccircle cx='118' cy='240' r='1.6' fill='white' opacity='0.92'/%3E%3Ccircle cx='264' cy='29' r='1.2' fill='white' opacity='0.64'/%3E%3Ccircle cx='290' cy='131' r='1.9' fill='white' opacity='0.67'/%3E%3Ccircle cx='152' cy='116' r='1.5' fill='white' opacity='0.78'/%3E%3Ccircle cx='175' cy='271' r='2.0' fill='white' opacity='0.92'/%3E%3Ccircle cx='257' cy='297' r='1.9' fill='white' opacity='0.62'/%3E%3Ccircle cx='258' cy='289' r='2.3' fill='white' opacity='0.78'/%3E%3Ccircle cx='214' cy='63' r='2.2' fill='white' opacity='0.78'/%3E%3Ccircle cx='85' cy='19' r='2.2' fill='white' opacity='0.95'/%3E%3Ccircle cx='27' cy='240' r='1.6' fill='white' opacity='0.61'/%3E%3Ccircle cx='88' cy='231' r='2.2' fill='white' opacity='0.57'/%3E%3Ccircle cx='184' cy='13' r='2.0' fill='white' opacity='0.68'/%3E%3Ccircle cx='264' cy='294' r='1.7' fill='white' opacity='0.95'/%3E%3Ccircle cx='93' cy='23' r='1.8' fill='white' opacity='0.56'/%3E%3Ccircle cx='59' cy='122' r='1.9' fill='white' opacity='0.61'/%3E%3Ccircle cx='13' cy='260' r='1.4' fill='white' opacity='0.93'/%3E%3Ccircle cx='269' cy='113' r='1.6' fill='white' opacity='0.76'/%3E%3Ccircle cx='193' cy='179' r='1.8' fill='white' opacity='0.80'/%3E%3Ccircle cx='282' cy='152' r='1.6' fill='white' opacity='0.84'/%3E%3Ccircle cx='71' cy='90' r='2.4' fill='white' opacity='0.76'/%3E%3Ccircle cx='165' cy='3' r='1.6' fill='white' opacity='0.78'/%3E%3Ccircle cx='6' cy='185' r='1.9' fill='white' opacity='0.57'/%3E%3C/svg%3E");
+  animation: snow-near 11s linear infinite;
+}
+.ambient-snow::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Ccircle cx='324' cy='386' r='4.6' fill='white' opacity='0.94'/%3E%3Ccircle cx='385' cy='480' r='3.1' fill='white' opacity='0.82'/%3E%3Ccircle cx='491' cy='337' r='4.8' fill='white' opacity='0.73'/%3E%3Ccircle cx='244' cy='128' r='4.1' fill='white' opacity='0.84'/%3E%3Ccircle cx='7' cy='113' r='3.6' fill='white' opacity='0.93'/%3E%3Ccircle cx='398' cy='83' r='4.6' fill='white' opacity='0.73'/%3E%3Ccircle cx='321' cy='66' r='3.0' fill='white' opacity='0.92'/%3E%3Ccircle cx='109' cy='112' r='5.0' fill='white' opacity='0.92'/%3E%3Ccircle cx='150' cy='500' r='4.1' fill='white' opacity='0.87'/%3E%3Ccircle cx='106' cy='489' r='4.4' fill='white' opacity='0.94'/%3E%3Ccircle cx='465' cy='155' r='3.7' fill='white' opacity='0.74'/%3E%3Ccircle cx='76' cy='34' r='3.6' fill='white' opacity='0.85'/%3E%3C/svg%3E");
+  filter: blur(0.6px);
+  animation: snow-far 17s linear infinite;
+}
+body[data-weather="snow"] .ambient-snow {
+  display: block;
+}
+.ambient-drops {
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.8;
+}
+.ambient-drops::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cg transform='translate%28109 134%29'%3E%3Cellipse rx='3.4' ry='4.1' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-1.2' cy='-1.6' r='1.0' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28122 140%29'%3E%3Cellipse rx='2.0' ry='2.4' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-0.7' cy='-0.9' r='0.6' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28150 187%29'%3E%3Cellipse rx='1.8' ry='2.0' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-0.6' cy='-0.8' r='0.5' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%2827 191%29'%3E%3Cellipse rx='3.0' ry='3.2' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-1.0' cy='-1.3' r='0.8' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28230 226%29'%3E%3Cellipse rx='2.9' ry='3.6' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-1.0' cy='-1.4' r='0.8' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%2842 9%29'%3E%3Cellipse rx='2.7' ry='2.8' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-0.9' cy='-1.1' r='0.7' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%2849 61%29'%3E%3Cellipse rx='1.7' ry='2.0' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-0.6' cy='-0.8' r='0.5' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28106 198%29'%3E%3Cellipse rx='2.6' ry='3.3' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-0.9' cy='-1.3' r='0.7' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28120 157%29'%3E%3Cellipse rx='2.5' ry='2.9' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-0.9' cy='-1.1' r='0.7' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28233 233%29'%3E%3Cellipse rx='3.3' ry='4.1' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-1.1' cy='-1.7' r='0.9' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%2878 58%29'%3E%3Cellipse rx='2.2' ry='2.3' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-0.8' cy='-0.9' r='0.6' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28181 97%29'%3E%3Cellipse rx='3.3' ry='3.8' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-1.2' cy='-1.5' r='0.9' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28224 199%29'%3E%3Cellipse rx='1.6' ry='1.8' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-0.6' cy='-0.7' r='0.4' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%28214 113%29'%3E%3Cellipse rx='3.6' ry='4.2' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-1.2' cy='-1.7' r='1.0' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%2823 150%29'%3E%3Cellipse rx='3.2' ry='3.6' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-1.1' cy='-1.4' r='0.9' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3Cg transform='translate%2826 82%29'%3E%3Cellipse rx='3.5' ry='4.5' fill='white' fill-opacity='.10' stroke='white' stroke-opacity='.38' stroke-width='.7'/%3E%3Ccircle cx='-1.2' cy='-1.8' r='1.0' fill='white' fill-opacity='.7'/%3E%3C/g%3E%3C/svg%3E");
+}
+.ambient-drops::after {
+  position: absolute;
+  top: -260px;
+  left: 0;
+  width: 100%;
+  height: calc(100% + 260px);
+  content: "";
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cpath d='M38 58 L38 84' stroke='white' stroke-opacity='.18' stroke-width='2.0' stroke-linecap='round'/%3E%3Cellipse cx='38' cy='84' rx='2.5' ry='3.3' fill='white' fill-opacity='.14' stroke='white' stroke-opacity='.45' stroke-width='.7'/%3E%3Cpath d='M24 179 L24 205' stroke='white' stroke-opacity='.18' stroke-width='2.1' stroke-linecap='round'/%3E%3Cellipse cx='24' cy='205' rx='2.6' ry='3.4' fill='white' fill-opacity='.14' stroke='white' stroke-opacity='.45' stroke-width='.7'/%3E%3Cpath d='M144 102 L144 128' stroke='white' stroke-opacity='.18' stroke-width='2.1' stroke-linecap='round'/%3E%3Cellipse cx='144' cy='128' rx='2.6' ry='3.4' fill='white' fill-opacity='.14' stroke='white' stroke-opacity='.45' stroke-width='.7'/%3E%3Cpath d='M186 33 L186 59' stroke='white' stroke-opacity='.18' stroke-width='2.5' stroke-linecap='round'/%3E%3Cellipse cx='186' cy='59' rx='3.2' ry='4.1' fill='white' fill-opacity='.14' stroke='white' stroke-opacity='.45' stroke-width='.7'/%3E%3Cpath d='M38 97 L38 123' stroke='white' stroke-opacity='.18' stroke-width='2.1' stroke-linecap='round'/%3E%3Cellipse cx='38' cy='123' rx='2.7' ry='3.5' fill='white' fill-opacity='.14' stroke='white' stroke-opacity='.45' stroke-width='.7'/%3E%3C/svg%3E");
+  animation: drops-slide 16s linear infinite;
+}
+body[data-weather="rain"] .ambient-drops,
+body[data-weather="storm"] .ambient-drops {
+  display: block;
+}
+.ambient-bolt {
+  top: 1%;
+  left: 58%;
+  width: 52px;
+  height: 106px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 130'%3E%3Cpolygon points='40%2C0 8%2C72 30%2C72 14%2C130 60%2C48 36%2C48 54%2C0' fill='%23fffbea'/%3E%3C/svg%3E") center / contain no-repeat;
+  filter: drop-shadow(0 0 10px rgba(255, 240, 200, 0.9)) drop-shadow(0 0 30px rgba(220, 200, 255, 0.6));
+  opacity: 0;
+}
+body[data-weather="storm"] .ambient-bolt {
+  display: block;
+  animation: storm-flash 9s ease-out infinite;
+}
+
+.ambient-scrim {
+  inset: 0;
+  background: linear-gradient(180deg, rgba(12, 6, 14, 0.34) 0, rgba(12, 6, 14, 0.2) 14%, transparent 32%);
+}
+
 /* Night sky: the starfield turns slowly around a pole star, as Earth's rotation makes it appear to. */
 .ambient-stars {
   inset: 0;
@@ -418,7 +567,6 @@ svg {
 .ambient-meteor {
   top: 1%;
   left: 70%;
-  display: none;
   width: 160px;
   height: 1.5px;
   border-radius: 999px;
@@ -696,7 +844,7 @@ body[data-weather="storm"] .ambient-weather::before {
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 22px;
-  text-shadow: 0 1px 12px rgba(40, 10, 35, 0.18);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 18px rgba(0, 0, 0, 0.3);
 }
 .location-heading {
   min-width: 0;
@@ -1422,9 +1570,32 @@ body[data-weather="storm"] .ambient-weather::before {
     transform: translate(-12vw, 8vh) scale(1.1);
   }
 }
-@keyframes cloud-drift {
+@keyframes cloud-cross {
+  from {
+    transform: translateX(-70vmax);
+  }
   to {
-    transform: translateX(40vw);
+    transform: translateX(calc(100vw + 10vmax));
+  }
+}
+@keyframes fog-roll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes snow-near {
+  to {
+    transform: translate(40px, 300px);
+  }
+}
+@keyframes snow-far {
+  to {
+    transform: translate(-36px, 520px);
+  }
+}
+@keyframes drops-slide {
+  to {
+    transform: translateY(260px);
   }
 }
 @keyframes rain-sheet {
@@ -1757,8 +1928,9 @@ body[data-weather="storm"] .ambient-weather::before {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+  /* !important so the per-weather scene rules can't bring layers back. */
   .ambient-weather > span {
-    display: none;
+    display: none !important;
   }
 }
 
