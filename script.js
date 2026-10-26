@@ -27,7 +27,7 @@ function forecastUrl(place) {
   const params = new URLSearchParams({
     latitude: place.latitude, longitude: place.longitude,
     current: ["temperature_2m","relative_humidity_2m","apparent_temperature","is_day","precipitation","weather_code","cloud_cover","surface_pressure","wind_speed_10m","wind_direction_10m"].join(","),
-    hourly: ["temperature_2m","apparent_temperature","precipitation_probability","weather_code","visibility","wind_speed_10m","relative_humidity_2m"].join(","),
+    hourly: ["temperature_2m","apparent_temperature","precipitation_probability","weather_code","visibility","wind_speed_10m","relative_humidity_2m","is_day"].join(","),
     daily: ["weather_code","temperature_2m_max","temperature_2m_min","sunrise","sunset","uv_index_max","precipitation_probability_max","wind_speed_10m_max"].join(","),
     temperature_unit: state.unit === "imperial" ? "fahrenheit" : "celsius", wind_speed_unit: state.unit === "imperial" ? "mph" : "kmh", timezone: "auto", forecast_days: "7"
   });
@@ -109,7 +109,7 @@ function updateLocationHeading(place, statusText) {
 function sliceHourly(hourly, start, count) {
   return Array.from({ length: count }, (_, offset) => {
     const index = Math.min(start + offset, hourly.time.length - 1);
-    return { time: hourly.time[index], temperature: hourly.temperature_2m[index], precipitation: hourly.precipitation_probability[index] ?? 0, weatherCode: hourly.weather_code[index] };
+    return { time: hourly.time[index], temperature: hourly.temperature_2m[index], precipitation: hourly.precipitation_probability[index] ?? 0, weatherCode: hourly.weather_code[index], isDay: hourly.is_day?.[index] !== 0 };
   });
 }
 
@@ -129,21 +129,33 @@ function renderChart(hours, unit) {
   const y = value => margin.top + (max - value) / (max - min || 1) * plotHeight;
   const ticks = Array.from({ length: 4 }, (_, index) => min + (max - min) / 3 * index).reverse();
   const points = hours.map((hour, index) => `${x(index).toFixed(1)},${y(hour.temperature).toFixed(1)}`).join(" ");
+  const base = height - margin.bottom;
+  const area = `${x(0).toFixed(1)},${base} ${points} ${x(hours.length - 1).toFixed(1)},${base}`;
   const grid = ticks.map(tick => { const yp = y(tick).toFixed(1); return `<line class="chart-grid" x1="${margin.left}" y1="${yp}" x2="${width - margin.right}" y2="${yp}"/><text x="0" y="${Number(yp) + 4}">${Math.round(tick)}&deg;</text>`; }).join("");
   const labels = hours.map((hour, index) => index % 2 ? "" : `<text x="${x(index).toFixed(1)}" y="${height - 4}" text-anchor="${index === 0 ? "start" : "middle"}">${index === 0 ? "Now" : formatTime(hour.time).replace(":00", "")}</text>`).join("");
   const dots = hours.map((hour, index) => `<circle class="chart-dot" cx="${x(index).toFixed(1)}" cy="${y(hour.temperature).toFixed(1)}" r="${index === 0 ? 4 : 2.5}"><title>${formatTime(hour.time)}: ${Math.round(hour.temperature)}${unit}</title></circle>`).join("");
   elements.chart.setAttribute("aria-label", `Temperature from ${Math.round(rawMin)} to ${Math.round(rawMax)}${unit} over the next 12 hours.`);
-  elements.chart.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-hidden="true" preserveAspectRatio="none">${grid}<polyline class="chart-line" pathLength="1" points="${points}"/>${dots}${labels}</svg>`;
+  elements.chart.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-hidden="true" preserveAspectRatio="none">${grid}<polygon class="chart-area" points="${area}"/><polyline class="chart-line" pathLength="1" points="${points}"/>${dots}${labels}</svg>`;
 }
 
 function renderHourly(hours, unit) {
-  elements.hourlyStrip.innerHTML = hours.map((hour, index) => `<div class="hour-item"><span class="hour-time">${index === 0 ? "Now" : formatTime(hour.time)}</span><span class="hour-icon" aria-hidden="true">${weatherIcon(getWeather(hour.weatherCode).type, true)}</span><strong class="hour-temp">${Math.round(hour.temperature)}${unit}</strong><span class="hour-rain">${Math.round(hour.precipitation)}% rain</span></div>`).join("");
+  elements.hourlyStrip.innerHTML = hours.map((hour, index) => `<div class="hour-item"><span class="hour-time">${index === 0 ? "Now" : formatTime(hour.time)}</span><span class="hour-icon" aria-hidden="true">${weatherIcon(getWeather(hour.weatherCode).type, hour.isDay)}</span><strong class="hour-temp">${Math.round(hour.temperature)}${unit}</strong><span class="hour-rain">${Math.round(hour.precipitation)}% rain</span></div>`).join("");
 }
 
 function renderWeekly(daily, shortUnit, windUnit) {
+  const weekLow = Math.min(...daily.temperature_2m_min);
+  const weekSpan = Math.max(...daily.temperature_2m_max) - weekLow || 1;
+  const drop = `<svg viewBox="0 0 11 13" aria-hidden="true"><path d="M5.5 0C5.5 0 0 6 0 8.5a5.5 5.5 0 0 0 11 0C11 6 5.5 0 5.5 0Z"/></svg>`;
   elements.weekly.innerHTML = daily.time.map((date, index) => {
     const condition = getWeather(daily.weather_code[index]);
-    return `<div class="week-row"><div class="week-day"><span class="weather-icon" aria-hidden="true">${weatherIcon(condition.type, true)}</span><span>${index === 0 ? "Today" : formatWeekday(date)}</span></div><span class="week-condition">${condition.label}</span><span class="week-rain num">${Math.round(daily.precipitation_probability_max[index] ?? 0)}% rain</span><span class="week-temp num"><strong>${Math.round(daily.temperature_2m_max[index])}&deg;</strong> <span>/ ${Math.round(daily.temperature_2m_min[index])}&deg; ${shortUnit}</span></span><span class="week-wind num">${Math.round(daily.wind_speed_10m_max[index])} ${windUnit}</span></div>`;
+    const low = daily.temperature_2m_min[index];
+    const high = daily.temperature_2m_max[index];
+    const rain = Math.round(daily.precipitation_probability_max[index] ?? 0);
+    // Position each day's range on the week's scale, like the iOS Weather ten-day list.
+    const left = (low - weekLow) / weekSpan * 100;
+    const width = Math.max(4, (high - low) / weekSpan * 100);
+    const barStyle = `left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;--size:${(10000 / width).toFixed(1)}%;--pos:${width >= 99.9 ? 0 : (left / (100 - width) * 100).toFixed(1)}%`;
+    return `<div class="week-row"><div class="week-day"><span class="weather-icon" aria-hidden="true">${weatherIcon(condition.type, true)}</span><span>${index === 0 ? "Today" : formatWeekday(date)}</span></div><span class="week-condition">${condition.label}</span><span class="week-rain num${rain < 20 ? " is-dim" : ""}">${drop}${rain}%<span class="sr-only"> chance of rain</span></span><span class="week-wind num">${Math.round(daily.wind_speed_10m_max[index])} ${windUnit}</span><span class="week-temp num"><span class="week-low"><span class="sr-only">Low </span>${Math.round(low)}&deg;<span class="sr-only">${shortUnit}</span></span><span class="week-bar" aria-hidden="true"><i style="${barStyle}"></i></span><strong class="week-high"><span class="sr-only">High </span>${Math.round(high)}&deg;<span class="sr-only">${shortUnit}</span></strong></span></div>`;
   }).join("");
 }
 

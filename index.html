@@ -7,7 +7,7 @@
       name="description"
       content="Atmos is a cinematic weather dashboard with live conditions, hourly detail, and a seven-day forecast."
     />
-    <meta name="theme-color" content="#45bfc2" />
+    <meta name="theme-color" content="#0b4fb5" />
     <title>Atmos - Weather, beautifully clear</title>
     <link
       rel="icon"
@@ -17,6 +17,27 @@
   </head>
   <body data-weather="clear" data-day="day">
     <a class="skip-link" href="#main-content">Skip to forecast</a>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <radialGradient id="g-sun" cx="38%" cy="34%" r="70%">
+          <stop offset="0" stop-color="#fff6c2" />
+          <stop offset="0.45" stop-color="#ffd23f" />
+          <stop offset="1" stop-color="#ff9f0a" />
+        </radialGradient>
+        <linearGradient id="g-moon" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fffbe6" />
+          <stop offset="1" stop-color="#ffd97a" />
+        </linearGradient>
+        <linearGradient id="g-cloud" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff" />
+          <stop offset="1" stop-color="#d6e4f3" />
+        </linearGradient>
+        <linearGradient id="g-chart-area" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.34" />
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+    </svg>
     <div class="ambient-weather" aria-hidden="true">
       <span class="ambient-orb"></span>
       <span class="ambient-prism prism-one"></span>
