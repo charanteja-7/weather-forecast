@@ -1,99 +1,120 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Atmos is a fast, precise weather desk with current conditions, an hourly outlook, and a seven-day forecast." />
-    <meta name="theme-color" content="#f2f4f7" />
-    <title>Atmos â€” Weather, made useful</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><path d=%22M8 38h38a10 10 0 0 0 0-20 15 15 0 0 0-28 7A10 10 0 0 0 8 38Z%22 fill=%22none%22 stroke=%22%231d5fbf%22 stroke-width=%226%22 stroke-linecap=%22round%22/></svg>" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Atmos is a cinematic weather dashboard with live conditions, hourly detail, and a seven-day forecast." />
+    <meta name="theme-color" content="#07192f" />
+    <title>Atmos - Weather, beautifully clear</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><circle cx=%2223%22 cy=%2222%22 r=%2210%22 fill=%22%23ffd875%22/><path d=%22M11 43h40a10 10 0 0 0-2-20 15 15 0 0 0-27 8A10 10 0 0 0 11 43Z%22 fill=%22%23f5fbff%22/></svg>" />
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body data-weather="clear" data-day="day">
     <a class="skip-link" href="#main-content">Skip to forecast</a>
+    <div class="ambient-weather" aria-hidden="true">
+      <span class="ambient-orb"></span>
+      <span class="ambient-cloud cloud-one"></span>
+      <span class="ambient-cloud cloud-two"></span>
+      <span class="ambient-rain"></span>
+      <span class="ambient-stars"></span>
+    </div>
+
     <div class="app-shell">
-      <aside class="sidebar" id="sidebar" aria-label="Atmos navigation">
+      <aside class="sidebar glass" id="sidebar" aria-label="Atmos navigation">
         <div class="brand-row">
-          <a class="brand" href="#" aria-label="Atmos home">
-            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 12.5h16.5a4.5 4.5 0 0 0 0-9 7 7 0 0 0-13.2 3.2A5 5 0 0 0 4 12.5Z"/><path d="M5 19h22M9 25.5h14"/></svg>
+          <a class="brand" href="#forecast" aria-label="Atmos home">
+            <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><circle cx="15" cy="14" r="7"/><path d="M8 28h24a7 7 0 0 0-2-13 10 10 0 0 0-18 5A7 7 0 0 0 8 28Z"/></svg>
             <span>Atmos</span>
           </a>
           <button class="icon-button sidebar-close" id="sidebar-close" type="button" aria-label="Close navigation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
         </div>
+
         <nav class="primary-nav" aria-label="Primary">
-          <a class="nav-item active" href="#forecast"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M6 7h12M8.5 17h7"/></svg>Forecast</a>
+          <a class="nav-item active" href="#forecast"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14a8 8 0 1 1 16 0"/><path d="M7 14h10M9 18h6"/></svg>Forecast</a>
         </nav>
+
         <section class="recent-section" aria-labelledby="recent-title">
           <h2 id="recent-title">Recent places</h2>
           <div class="recent-list" id="recent-list"><p class="recent-empty">Your searches will appear here.</p></div>
         </section>
+
         <div class="sidebar-footer">
           <div class="units" aria-label="Temperature unit">
             <span>Units</span>
             <div class="segmented" role="group" aria-label="Temperature unit">
-              <button class="unit-button active" type="button" data-unit="metric" aria-pressed="true">Â°C</button>
-              <button class="unit-button" type="button" data-unit="imperial" aria-pressed="false">Â°F</button>
+              <button class="unit-button active" type="button" data-unit="metric" aria-pressed="true">&deg;C</button>
+              <button class="unit-button" type="button" data-unit="imperial" aria-pressed="false">&deg;F</button>
             </div>
           </div>
-          <a class="data-source" href="https://open-meteo.com/" target="_blank" rel="noreferrer">Data by Openâ€‘Meteo</a>
+          <p class="data-source">Weather by <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a><br />Places by <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a></p>
         </div>
       </aside>
+
       <div class="sidebar-scrim" id="sidebar-scrim" hidden></div>
+
       <main class="main" id="main-content">
-        <header class="mobile-bar">
+        <header class="mobile-bar glass">
           <button class="icon-button" id="menu-button" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
           <span class="mobile-brand">Atmos</span>
           <button class="icon-button" id="mobile-location" type="button" aria-label="Use current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
         </header>
+
         <div class="canvas" id="forecast">
           <header class="page-header">
             <div class="location-heading">
+              <p class="eyebrow">Live local weather</p>
               <h1 id="location-name">Bengaluru</h1>
-              <p id="location-context">Karnataka, India Â· Loading live weather</p>
+              <p id="location-context">Karnataka, India - Loading live weather</p>
             </div>
             <div class="header-actions">
-              <form class="search-form" id="search-form" role="search">
-                <label class="sr-only" for="search-input">Search for a city</label>
+              <form class="search-form glass" id="search-form" role="search">
+                <label class="sr-only" for="search-input">Search for a city, locality, or Indian postcode</label>
                 <svg class="search-symbol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-                <input id="search-input" type="search" placeholder="Search city or postcode" autocomplete="off" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false" />
+                <input id="search-input" type="search" placeholder="City, locality or postcode" autocomplete="off" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false" />
                 <button class="search-submit" type="submit">Search</button>
-                <div class="search-results" id="search-results" role="listbox" hidden></div>
+                <div class="search-results glass" id="search-results" role="listbox" hidden></div>
               </form>
-              <button class="icon-button location-button" id="location-button" type="button" aria-label="Use current location" title="Use current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
+              <button class="icon-button glass location-button" id="location-button" type="button" aria-label="Use current location" title="Use current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
             </div>
           </header>
-          <div class="status-message" id="status-message" role="status" aria-live="polite" hidden></div>
+
+          <div class="status-message glass" id="status-message" role="status" aria-live="polite" hidden></div>
+
           <div class="forecast-grid" id="forecast-content" aria-busy="true">
-            <section class="panel current-panel" aria-labelledby="current-title">
+            <section class="panel glass current-panel" aria-labelledby="current-title">
               <div class="panel-heading"><div><h2 id="current-title">Right now</h2><p id="updated-time">Updating weather</p></div><button class="text-button" id="refresh-button" type="button">Refresh</button></div>
               <div class="current-reading">
-                <div class="current-copy"><p class="temperature num"><span id="current-temp">â€”</span><span class="temperature-unit">Â°C</span></p><p class="condition" id="current-condition">Loading conditions</p></div>
+                <div class="current-copy"><p class="temperature num"><span id="current-temp">--</span><span class="temperature-unit">&deg;C</span></p><p class="condition" id="current-condition">Loading conditions</p></div>
                 <div class="weather-visual" id="current-icon" aria-hidden="true"></div>
               </div>
               <p class="weather-finding" id="weather-finding">Checking how the day will change.</p>
               <div class="sun-track" aria-label="Daylight progress">
-                <div class="sun-track-labels"><span>Sunrise <strong class="num" id="sunrise">â€”</strong></span><span>Sunset <strong class="num" id="sunset">â€”</strong></span></div>
+                <div class="sun-track-labels"><span>Sunrise <strong class="num" id="sunrise">--</strong></span><span>Sunset <strong class="num" id="sunset">--</strong></span></div>
                 <div class="sun-track-line"><span id="daylight-progress"></span></div>
               </div>
             </section>
-            <section class="panel hourly-panel" aria-labelledby="hourly-title">
+
+            <section class="panel glass hourly-panel" aria-labelledby="hourly-title">
               <div class="panel-heading"><div><h2 id="hourly-title">Temperature ahead</h2><p id="hourly-caption">Next 12 hours</p></div><span class="forecast-range">Hourly</span></div>
               <div class="chart" id="temperature-chart" aria-label="Hourly temperature chart"></div>
               <div class="hourly-strip" id="hourly-strip" aria-label="Hourly forecast"></div>
             </section>
-            <section class="metrics-panel" aria-label="Current weather details">
-              <div class="metric"><span>Feels like</span><strong class="num" id="feels-like">â€”</strong></div>
-              <div class="metric"><span>Humidity</span><strong class="num" id="humidity">â€”</strong></div>
-              <div class="metric"><span>Wind</span><strong class="num" id="wind">â€”</strong></div>
-              <div class="metric"><span>Visibility</span><strong class="num" id="visibility">â€”</strong></div>
-              <div class="metric"><span>Pressure</span><strong class="num" id="pressure">â€”</strong></div>
-              <div class="metric"><span>UV maximum</span><strong class="num" id="uv-index">â€”</strong></div>
+
+            <section class="metrics-panel glass" aria-label="Current weather details">
+              <div class="metric"><span>Feels like</span><strong class="num" id="feels-like">--</strong></div>
+              <div class="metric"><span>Humidity</span><strong class="num" id="humidity">--</strong></div>
+              <div class="metric"><span>Wind</span><strong class="num" id="wind">--</strong></div>
+              <div class="metric"><span>Visibility</span><strong class="num" id="visibility">--</strong></div>
+              <div class="metric"><span>Pressure</span><strong class="num" id="pressure">--</strong></div>
+              <div class="metric"><span>UV maximum</span><strong class="num" id="uv-index">--</strong></div>
             </section>
-            <section class="panel weekly-panel" aria-labelledby="weekly-title">
+
+            <section class="panel glass weekly-panel" aria-labelledby="weekly-title">
               <div class="panel-heading weekly-heading"><div><h2 id="weekly-title">Seven-day outlook</h2><p>Daily highs, lows, rain chance, and wind</p></div><span class="forecast-range" id="week-range">This week</span></div>
               <div class="weekly-table" id="weekly-forecast"></div>
             </section>
           </div>
+
           <footer class="app-footer"><p>Forecasts are estimates. Check local alerts before weather-sensitive plans.</p><p>Built as a modern continuation of a college weather project.</p></footer>
         </div>
       </main>
