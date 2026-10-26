@@ -1,123 +1,104 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Weather App</title>
+    <meta name="description" content="Atmos is a fast, precise weather desk with current conditions, an hourly outlook, and a seven-day forecast." />
+    <meta name="theme-color" content="#f2f4f7" />
+    <title>Atmos â€” Weather, made useful</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><path d=%22M8 38h38a10 10 0 0 0 0-20 15 15 0 0 0-28 7A10 10 0 0 0 8 38Z%22 fill=%22none%22 stroke=%22%231d5fbf%22 stroke-width=%226%22 stroke-linecap=%22round%22/></svg>" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="container">
-      <!-- left-container -->
-      <div class="left-container">
-        <div class="current-info">
-          <div class="components humidity">
-            <div>
-              <img src="images/humidity.png" alt="" />
-            </div>
-            <div>
-              <p class="value">- -</p>
-              <p class="name">Humidity</p>
-            </div>
-          </div>
-          <div class="components windspeed">
-            <div>
-              <img src="images/windspeed.png" alt="" />
-            </div>
-            <div>
-              <p class="value">- -</p>
-              <p class="name">Windspeed</p>
-            </div>
-          </div>
-          <div class="components visibility">
-            <div>
-              <img src="images/visibility.png" alt="" />
-            </div>
-            <div>
-              <p class="value">- -</p>
-              <p class="name">Visibility</p>
-            </div>
-          </div>
-          <div class="components pressure">
-            <div>
-              <img src="images/pressure.png" alt="" />
-            </div>
-            <div>
-              <p class="value">- -</p>
-              <p class="name">Pressure</p>
-            </div>
-          </div>
-          <div class="components feelslike">
-            <div>
-              <img src="images/feelslike.png" alt="" />
-            </div>
-            <div>
-              <p class="value">- -</p>
-              <p class="name">Feelslike</p>
-            </div>
-          </div>
-          <div class="components sealevel">
-            <div>
-              <img src="images/sealevel.png" alt="" />
-            </div>
-            <div>
-              <p class="value">- -</p>
-              <p class="name">Sealevel</p>
-            </div>
-          </div>
+    <a class="skip-link" href="#main-content">Skip to forecast</a>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Atmos navigation">
+        <div class="brand-row">
+          <a class="brand" href="#" aria-label="Atmos home">
+            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 12.5h16.5a4.5 4.5 0 0 0 0-9 7 7 0 0 0-13.2 3.2A5 5 0 0 0 4 12.5Z"/><path d="M5 19h22M9 25.5h14"/></svg>
+            <span>Atmos</span>
+          </a>
+          <button class="icon-button sidebar-close" id="sidebar-close" type="button" aria-label="Close navigation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
         </div>
-        <div class="future-info">
-          <h3>HOURLY FORECAST</h3>
-          <div class="hourly first"></div>
-          <div class="hourly second"></div>
-          <div class="hourly third"></div>
-          <div class="hourly fourth"></div>
-          <h3>DAILY FORECAST</h3>
-          <div class="daily first"></div>
-          <div class="daily second"></div>
-          <div class="daily third"></div>
-          <div class="daily fourth"></div>
-        </div>
-      </div>
-      <!-- right-container -->
-      <div class="right-container">
-        <!-- search bar   -->
-        <div class="search">
-          <img class="map-icon" src="images/map-solid-24.png" alt="" />
-          <input type="text" id="search-bar" placeholder="Search the City" />
-          <button onclick="displayWeather()">
-            <img class="search-icon" src="images/search.png" alt="not found" />
-          </button>
-        </div>
-        <!-- weather -->
-        <div class="weather">
-          <div class="box">
-            <img src="images/clouds.png" alt="not found" />
-            <h1 class="temperature">21°C</h1>
-            <h1 class="city">LN Puram</h1>
-            <div class="info">
-              <p class="date"></p>
-              <p class="time"></p>
-            </div>
-            <div class="info">
-              <p id="currentDate"></p>
-              <p id="currentTime"></p>
+        <nav class="primary-nav" aria-label="Primary">
+          <a class="nav-item active" href="#forecast"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M6 7h12M8.5 17h7"/></svg>Forecast</a>
+        </nav>
+        <section class="recent-section" aria-labelledby="recent-title">
+          <h2 id="recent-title">Recent places</h2>
+          <div class="recent-list" id="recent-list"><p class="recent-empty">Your searches will appear here.</p></div>
+        </section>
+        <div class="sidebar-footer">
+          <div class="units" aria-label="Temperature unit">
+            <span>Units</span>
+            <div class="segmented" role="group" aria-label="Temperature unit">
+              <button class="unit-button active" type="button" data-unit="metric" aria-pressed="true">Â°C</button>
+              <button class="unit-button" type="button" data-unit="imperial" aria-pressed="false">Â°F</button>
             </div>
           </div>
-          
+          <a class="data-source" href="https://open-meteo.com/" target="_blank" rel="noreferrer">Data by Openâ€‘Meteo</a>
         </div>
-       
-        <div class="not-found">
-          <div class="box">
-            <p class="city"></p>
-            <img src="images/404.png" alt="" />
-            <p>Opps! Location not found</p>
+      </aside>
+      <div class="sidebar-scrim" id="sidebar-scrim" hidden></div>
+      <main class="main" id="main-content">
+        <header class="mobile-bar">
+          <button class="icon-button" id="menu-button" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <span class="mobile-brand">Atmos</span>
+          <button class="icon-button" id="mobile-location" type="button" aria-label="Use current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
+        </header>
+        <div class="canvas" id="forecast">
+          <header class="page-header">
+            <div class="location-heading">
+              <h1 id="location-name">Bengaluru</h1>
+              <p id="location-context">Karnataka, India Â· Loading live weather</p>
+            </div>
+            <div class="header-actions">
+              <form class="search-form" id="search-form" role="search">
+                <label class="sr-only" for="search-input">Search for a city</label>
+                <svg class="search-symbol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+                <input id="search-input" type="search" placeholder="Search city or postcode" autocomplete="off" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false" />
+                <button class="search-submit" type="submit">Search</button>
+                <div class="search-results" id="search-results" role="listbox" hidden></div>
+              </form>
+              <button class="icon-button location-button" id="location-button" type="button" aria-label="Use current location" title="Use current location"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
+            </div>
+          </header>
+          <div class="status-message" id="status-message" role="status" aria-live="polite" hidden></div>
+          <div class="forecast-grid" id="forecast-content" aria-busy="true">
+            <section class="panel current-panel" aria-labelledby="current-title">
+              <div class="panel-heading"><div><h2 id="current-title">Right now</h2><p id="updated-time">Updating weather</p></div><button class="text-button" id="refresh-button" type="button">Refresh</button></div>
+              <div class="current-reading">
+                <div class="current-copy"><p class="temperature num"><span id="current-temp">â€”</span><span class="temperature-unit">Â°C</span></p><p class="condition" id="current-condition">Loading conditions</p></div>
+                <div class="weather-visual" id="current-icon" aria-hidden="true"></div>
+              </div>
+              <p class="weather-finding" id="weather-finding">Checking how the day will change.</p>
+              <div class="sun-track" aria-label="Daylight progress">
+                <div class="sun-track-labels"><span>Sunrise <strong class="num" id="sunrise">â€”</strong></span><span>Sunset <strong class="num" id="sunset">â€”</strong></span></div>
+                <div class="sun-track-line"><span id="daylight-progress"></span></div>
+              </div>
+            </section>
+            <section class="panel hourly-panel" aria-labelledby="hourly-title">
+              <div class="panel-heading"><div><h2 id="hourly-title">Temperature ahead</h2><p id="hourly-caption">Next 12 hours</p></div><span class="forecast-range">Hourly</span></div>
+              <div class="chart" id="temperature-chart" aria-label="Hourly temperature chart"></div>
+              <div class="hourly-strip" id="hourly-strip" aria-label="Hourly forecast"></div>
+            </section>
+            <section class="metrics-panel" aria-label="Current weather details">
+              <div class="metric"><span>Feels like</span><strong class="num" id="feels-like">â€”</strong></div>
+              <div class="metric"><span>Humidity</span><strong class="num" id="humidity">â€”</strong></div>
+              <div class="metric"><span>Wind</span><strong class="num" id="wind">â€”</strong></div>
+              <div class="metric"><span>Visibility</span><strong class="num" id="visibility">â€”</strong></div>
+              <div class="metric"><span>Pressure</span><strong class="num" id="pressure">â€”</strong></div>
+              <div class="metric"><span>UV maximum</span><strong class="num" id="uv-index">â€”</strong></div>
+            </section>
+            <section class="panel weekly-panel" aria-labelledby="weekly-title">
+              <div class="panel-heading weekly-heading"><div><h2 id="weekly-title">Seven-day outlook</h2><p>Daily highs, lows, rain chance, and wind</p></div><span class="forecast-range" id="week-range">This week</span></div>
+              <div class="weekly-table" id="weekly-forecast"></div>
+            </section>
           </div>
+          <footer class="app-footer"><p>Forecasts are estimates. Check local alerts before weather-sensitive plans.</p><p>Built as a modern continuation of a college weather project.</p></footer>
         </div>
-      </div>
-      <!-- right-container end   -->
+      </main>
     </div>
-
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
   </body>
 </html>
+

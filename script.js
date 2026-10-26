@@ -1,147 +1,51 @@
-  const container = document.querySelector('.container');
-  const searchBar = document.querySelector('#search-bar');
-  const notfound = document.querySelector('.not-found');
-  const weather = document.querySelector('.weather');
-  const leftContainer = document.querySelector('.left-container');
-  const rightContainer = document.querySelector('.right-container');
-  let weatherIcon = document.querySelector('.weather img');
+const GEOCODING_API = "https://geocoding-api.open-meteo.com/v1/search";
+const FORECAST_API = "https://api.open-meteo.com/v1/forecast";
+const DEFAULT_LOCATION = {name:"Bengaluru",admin1:"Karnataka",country:"India",latitude:12.97194,longitude:77.59369,timezone:"Asia/Kolkata"};
+const state = {unit:localStorage.getItem("atmos-unit")||"metric",location:getLocationFromUrl()||DEFAULT_LOCATION,weather:null,suggestions:[],activeSuggestion:-1,searchController:null,forecastController:null};
+const elements = {
+  content:document.querySelector("#forecast-content"),locationName:document.querySelector("#location-name"),locationContext:document.querySelector("#location-context"),searchForm:document.querySelector("#search-form"),searchInput:document.querySelector("#search-input"),searchResults:document.querySelector("#search-results"),status:document.querySelector("#status-message"),sidebar:document.querySelector("#sidebar"),scrim:document.querySelector("#sidebar-scrim"),menuButton:document.querySelector("#menu-button"),currentTemp:document.querySelector("#current-temp"),currentCondition:document.querySelector("#current-condition"),currentIcon:document.querySelector("#current-icon"),updatedTime:document.querySelector("#updated-time"),finding:document.querySelector("#weather-finding"),sunrise:document.querySelector("#sunrise"),sunset:document.querySelector("#sunset"),daylightProgress:document.querySelector("#daylight-progress"),chart:document.querySelector("#temperature-chart"),hourlyStrip:document.querySelector("#hourly-strip"),weekly:document.querySelector("#weekly-forecast"),recentList:document.querySelector("#recent-list"),weekRange:document.querySelector("#week-range")
+};
+const weatherCodes = {0:["Clear sky","clear"],1:["Mostly clear","partly"],2:["Partly cloudy","partly"],3:["Overcast","cloud"],45:["Fog","fog"],48:["Rime fog","fog"],51:["Light drizzle","rain"],53:["Drizzle","rain"],55:["Heavy drizzle","rain"],56:["Freezing drizzle","rain"],57:["Freezing drizzle","rain"],61:["Light rain","rain"],63:["Rain","rain"],65:["Heavy rain","rain"],66:["Freezing rain","rain"],67:["Freezing rain","rain"],71:["Light snow","snow"],73:["Snow","snow"],75:["Heavy snow","snow"],77:["Snow grains","snow"],80:["Light showers","rain"],81:["Showers","rain"],82:["Heavy showers","rain"],85:["Snow showers","snow"],86:["Heavy snow showers","snow"],95:["Thunderstorm","storm"],96:["Thunderstorm with hail","storm"],99:["Thunderstorm with hail","storm"]};
 
-  searchBar.addEventListener('keydown',(event)=>{
-      if(event.key === 'Enter'){
-          displayWeather();
-      }    
-  });
+function getLocationFromUrl(){const p=new URLSearchParams(location.search);const latitude=Number(p.get("lat"));const longitude=Number(p.get("lon"));const name=p.get("place");if(!name||!Number.isFinite(latitude)||!Number.isFinite(longitude))return null;return{name,latitude,longitude,admin1:p.get("region")||"",country:p.get("country")||""}}
+function forecastUrl(location){const p=new URLSearchParams({latitude:location.latitude,longitude:location.longitude,current:["temperature_2m","relative_humidity_2m","apparent_temperature","is_day","precipitation","weather_code","cloud_cover","surface_pressure","wind_speed_10m","wind_direction_10m"].join(","),hourly:["temperature_2m","apparent_temperature","precipitation_probability","weather_code","visibility","wind_speed_10m","relative_humidity_2m"].join(","),daily:["weather_code","temperature_2m_max","temperature_2m_min","sunrise","sunset","uv_index_max","precipitation_probability_max","wind_speed_10m_max"].join(","),temperature_unit:state.unit==="imperial"?"fahrenheit":"celsius",wind_speed_unit:state.unit==="imperial"?"mph":"kmh",timezone:"auto",forecast_days:"7"});return `${FORECAST_API}?${p}`}
+async function fetchJson(url,controller){const timeout=setTimeout(()=>controller.abort(),12000);try{const response=await fetch(url,{signal:controller.signal});if(!response.ok)throw new Error(`Request failed with ${response.status}`);return await response.json()}finally{clearTimeout(timeout)}}
+async function loadWeather(location,{save=true}={}){if(state.forecastController)state.forecastController.abort();const controller=new AbortController();state.forecastController=controller;state.location=location;setLoading(true);hideStatus();updateLocationHeading(location,"Loading live weather");try{const data=await fetchJson(forecastUrl(location),controller);if(controller!==state.forecastController)return;state.weather=data;renderWeather(data,location);updateUrl(location);if(save)saveRecent(location)}catch(error){if(error.name==="AbortError")return;showStatus("Live weather could not be loaded. Check your connection, then try again.",true);elements.updatedTime.textContent="Update failed"}finally{if(controller===state.forecastController)setLoading(false)}}
 
-  async function displayWeather() {
-    const city = await document.getElementById("search-bar").value;
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=ba20aeed33b73e4ce454f4af8f988ba8&units=metric`;
-    const response = await fetch(apiUrl);
-    var data = await response.json();
-    weatherReport(data);
-    clearForecastContainers();
-    //activate the content
-    if(data.cod == 404){
-      weather.classList.remove('active');
-      notfound.classList.add('active');
-      container.style.width='340px';
-      container.style.height='450px';
-      leftContainer.classList.remove('active');
-      leftContainer.style.display = 'none';
-      searchBar.value = '';
-      }
-    else{
-      const currentDateElement = document.getElementById('currentDate');
-    const currentTimeElement = document.getElementById('currentTime');
+function renderWeather(data,location){const current=data.current;const unit=data.current_units.temperature_2m;const windUnit=data.current_units.wind_speed_10m;const condition=getWeather(current.weather_code);let hourlyIndex=data.hourly.time.findIndex(time=>time>=current.time);if(hourlyIndex<0)hourlyIndex=0;const hourly=sliceHourly(data.hourly,hourlyIndex,12);updateLocationHeading(location,formatLocationTime(data.timezone,current.time));elements.currentTemp.textContent=Math.round(current.temperature_2m);document.querySelectorAll(".temperature-unit").forEach(node=>{node.textContent=unit});elements.currentCondition.textContent=condition.label;elements.currentIcon.innerHTML=weatherIcon(condition.type,current.is_day===1);elements.updatedTime.textContent=`Updated ${formatTime(current.time)}`;elements.finding.textContent=buildFinding(data,hourlyIndex);elements.sunrise.textContent=formatTime(data.daily.sunrise[0]);elements.sunset.textContent=formatTime(data.daily.sunset[0]);elements.daylightProgress.style.width=`${daylightPercentage(current.time,data.daily.sunrise[0],data.daily.sunset[0])}%`;setText("#feels-like",`${Math.round(current.apparent_temperature)}${unit}`);setText("#humidity",`${Math.round(current.relative_humidity_2m)}%`);setText("#wind",`${Math.round(current.wind_speed_10m)} ${windUnit}`);setText("#visibility",formatVisibility(data.hourly.visibility[hourlyIndex],state.unit));setText("#pressure",`${Math.round(current.surface_pressure)} hPa`);setText("#uv-index",formatUv(data.daily.uv_index_max[0]));renderChart(hourly,unit);renderHourly(hourly,unit);renderWeekly(data.daily,unit,windUnit);elements.weekRange.textContent=`${formatShortDate(data.daily.time[0])}â€“${formatShortDate(data.daily.time[6])}`}
+function updateLocationHeading(location,statusText){elements.locationName.textContent=location.name;const region=[location.admin1,location.country].filter(Boolean).join(", ");elements.locationContext.textContent=[region,statusText].filter(Boolean).join(" Â· ")}
+function sliceHourly(hourly,start,count){return Array.from({length:count},(_,offset)=>{const index=Math.min(start+offset,hourly.time.length-1);return{time:hourly.time[index],temperature:hourly.temperature_2m[index],precipitation:hourly.precipitation_probability[index]??0,weatherCode:hourly.weather_code[index]}})}
+function renderChart(hours,unit){const width=Math.max(300,Math.round(elements.chart.clientWidth||720)),height=174,margin={top:12,right:16,bottom:28,left:36};const values=hours.map(h=>h.temperature);const rawMin=Math.min(...values),rawMax=Math.max(...values);const step=Math.max(2,Math.ceil((rawMax-rawMin||4)/3));const min=Math.floor((rawMin-1)/step)*step,max=Math.ceil((rawMax+1)/step)*step;const plotWidth=width-margin.left-margin.right,plotHeight=height-margin.top-margin.bottom;const x=i=>margin.left+i/(hours.length-1)*plotWidth;const y=value=>margin.top+(max-value)/(max-min||1)*plotHeight;const ticks=Array.from({length:4},(_,i)=>min+(max-min)/3*i).reverse();const points=hours.map((h,i)=>`${x(i).toFixed(1)},${y(h.temperature).toFixed(1)}`).join(" ");const grids=ticks.map(t=>{const yp=y(t).toFixed(1);return `<line class="chart-grid" x1="${margin.left}" y1="${yp}" x2="${width-margin.right}" y2="${yp}"/><text x="0" y="${Number(yp)+4}">${Math.round(t)}Â°</text>`}).join("");const labels=hours.map((h,i)=>{if(i%2!==0)return"";const anchor=i===0?"start":"middle";return `<text x="${x(i).toFixed(1)}" y="${height-4}" text-anchor="${anchor}">${i===0?"Now":formatTime(h.time).replace(":00","")}</text>`}).join("");const dots=hours.map((h,i)=>`<circle class="chart-dot" cx="${x(i).toFixed(1)}" cy="${y(h.temperature).toFixed(1)}" r="${i===0?4:2.5}"><title>${formatTime(h.time)}: ${Math.round(h.temperature)}${unit}</title></circle>`).join("");elements.chart.setAttribute("aria-label",`Temperature from ${Math.round(rawMin)} to ${Math.round(rawMax)}${unit} over the next 12 hours.`);elements.chart.innerHTML=`<svg viewBox="0 0 ${width} ${height}" role="img" aria-hidden="true" preserveAspectRatio="none">${grids}<polyline class="chart-line" points="${points}"/>${dots}${labels}</svg>`}
+function renderHourly(hours,unit){elements.hourlyStrip.innerHTML=hours.map((h,i)=>`<div class="hour-item"><span class="hour-time">${i===0?"Now":formatTime(h.time)}</span><strong class="hour-temp">${Math.round(h.temperature)}${unit}</strong><span class="hour-rain">${Math.round(h.precipitation)}% rain</span></div>`).join("")}
+function renderWeekly(daily,unit,windUnit){elements.weekly.innerHTML=daily.time.map((date,index)=>{const condition=getWeather(daily.weather_code[index]);return `<div class="week-row"><div class="week-day"><span class="weather-icon" aria-hidden="true">${weatherIcon(condition.type,true)}</span><span>${index===0?"Today":formatWeekday(date)}</span></div><span class="week-condition">${condition.label}</span><span class="week-rain num">${Math.round(daily.precipitation_probability_max[index]??0)}% rain</span><span class="week-temp num"><strong>${Math.round(daily.temperature_2m_max[index])}Â°</strong> <span>/ ${Math.round(daily.temperature_2m_min[index])}Â° ${unit.replace("Â°","")}</span></span><span class="week-wind num">${Math.round(daily.wind_speed_10m_max[index])} ${windUnit}</span></div>`}).join("")}
+function buildFinding(data,start){const probabilities=data.hourly.precipitation_probability.slice(start,start+12);const maxRain=Math.max(...probabilities.map(v=>v??0));const rainOffset=probabilities.indexOf(maxRain);const currentTemp=data.current.temperature_2m,high=data.daily.temperature_2m_max[0],low=data.daily.temperature_2m_min[0],uv=data.daily.uv_index_max[0];if(maxRain>=45)return `Rain is most likely around ${formatTime(data.hourly.time[start+rainOffset])}, reaching ${Math.round(maxRain)}%.`;if(uv>=7&&data.current.is_day===1)return `UV peaks at ${formatUv(uv)} today. Shade matters even with cloud cover.`;if(high-currentTemp>=4)return `Still warming: today reaches about ${Math.round(high)}Â° before easing to ${Math.round(low)}Â° overnight.`;return `A steady day ahead, with a high near ${Math.round(high)}Â° and little rain expected.`}
+function weatherIcon(type,isDay){const sun=`<circle cx="44" cy="36" r="12"/><path d="M44 12v8M44 52v8M20 36h8M60 36h8M27 19l6 6M55 47l6 6M61 19l-6 6"/>`;const moon=`<path d="M55 20a19 19 0 1 0 11 28A20 20 0 0 1 55 20Z"/>`;const cloud=`<path d="M22 62h43a12 12 0 0 0 0-24 20 20 0 0 0-37.6 8.5A12 12 0 0 0 22 62Z"/>`;const icons={clear:isDay?sun:moon,partly:`${isDay?sun:moon}${cloud}`,cloud,fog:`${cloud}<path d="M20 73h48M28 82h34"/>`,rain:`${cloud}<path d="m31 72-4 8M48 72l-4 8M65 72l-4 8"/>`,snow:`${cloud}<path d="M30 73v10M25 78h10M48 73v10M43 78h10M66 73v10M61 78h10"/>`,storm:`${cloud}<path d="m49 69-8 13h10l-5 11"/>`};return `<svg viewBox="0 0 96 96" aria-hidden="true">${icons[type]||cloud}</svg>`}
+function getWeather(code){const[label,type]=weatherCodes[code]||["Variable weather","cloud"];return{label,type}}
 
-    const currentDate = new Date().toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    currentDateElement.innerHTML = currentDate;
+async function searchLocations(query,showResults=true){const normalized=query.trim();if(normalized.length<2){closeSearchResults();return[]}if(state.searchController)state.searchController.abort();const controller=new AbortController();state.searchController=controller;try{const p=new URLSearchParams({name:normalized,count:"8",language:"en",format:"json"});const data=await fetchJson(`${GEOCODING_API}?${p}`,controller);if(controller!==state.searchController)return[];state.suggestions=data.results||[];state.activeSuggestion=-1;if(showResults)renderSearchResults();return state.suggestions}catch(error){if(error.name!=="AbortError")showStatus("City search is unavailable right now. Try again shortly.",true);return[]}}
+function renderSearchResults(){if(!state.suggestions.length){elements.searchResults.innerHTML=`<div class="search-option" role="option" aria-disabled="true"><span>No matching places</span><span>Try a nearby city or postcode</span></div>`}else{elements.searchResults.innerHTML=state.suggestions.map((location,index)=>`<button class="search-option${index===state.activeSuggestion?" active":""}" type="button" role="option" data-index="${index}" aria-selected="${index===state.activeSuggestion}"><span>${escapeHtml(location.name)}</span><span>${escapeHtml([location.admin1,location.country].filter(Boolean).join(", "))}</span></button>`).join("")}elements.searchResults.hidden=false;elements.searchInput.setAttribute("aria-expanded","true")}
+function chooseSuggestion(index){const location=state.suggestions[index];if(!location)return;elements.searchInput.value="";closeSearchResults();loadWeather(normalizeLocation(location));closeSidebar()}
+function closeSearchResults(){elements.searchResults.hidden=true;elements.searchInput.setAttribute("aria-expanded","false");state.activeSuggestion=-1}
+function normalizeLocation(l){return{name:l.name,admin1:l.admin1||"",country:l.country||"",latitude:Number(l.latitude),longitude:Number(l.longitude),timezone:l.timezone||"auto"}}
+function useCurrentLocation(){if(!navigator.geolocation){showStatus("Location access is not supported in this browser.",true);return}hideStatus();elements.locationContext.textContent="Waiting for location permission";navigator.geolocation.getCurrentPosition(position=>loadWeather({name:"Current location",admin1:"",country:"",latitude:Number(position.coords.latitude.toFixed(5)),longitude:Number(position.coords.longitude.toFixed(5))}),()=>showStatus("Location permission was not available. Search for your city instead.",true),{enableHighAccuracy:false,timeout:10000,maximumAge:600000})}
+function saveRecent(location){if(location.name==="Current location")return;const recent=getRecent().filter(item=>item.name!==location.name||item.country!==location.country);recent.unshift(location);localStorage.setItem("atmos-recent",JSON.stringify(recent.slice(0,5)));renderRecent()}
+function getRecent(){try{return JSON.parse(localStorage.getItem("atmos-recent")||"[]")}catch{return[]}}
+function renderRecent(){const recent=getRecent();if(!recent.length){elements.recentList.innerHTML=`<p class="recent-empty">Your searches will appear here.</p>`;return}elements.recentList.innerHTML=recent.map((location,index)=>`<button class="recent-button" type="button" data-recent="${index}">${escapeHtml(location.name)}${location.country?`, ${escapeHtml(location.country)}`:""}</button>`).join("")}
+function updateUrl(location){const p=new URLSearchParams({place:location.name,lat:location.latitude,lon:location.longitude});if(location.admin1)p.set("region",location.admin1);if(location.country)p.set("country",location.country);history.replaceState(null,"",`${window.location.pathname}?${p}`)}
+function setLoading(value){elements.content.setAttribute("aria-busy",String(value));document.querySelector("#refresh-button").disabled=value}function showStatus(message,isError=false){elements.status.textContent=message;elements.status.classList.toggle("error",isError);elements.status.hidden=false}function hideStatus(){elements.status.hidden=true;elements.status.textContent=""}function setText(selector,value){document.querySelector(selector).textContent=value}
+function formatTime(dateTime){if(!dateTime||!dateTime.includes("T"))return"â€”";const[hoursText,minutes]=dateTime.split("T")[1].split(":");const hours=Number(hoursText);return`${hours%12||12}:${minutes} ${hours>=12?"PM":"AM"}`}
+function formatLocationTime(timezone,apiTime){try{const parts=apiTime.split("T")[0].split("-").map(Number);const date=new Date(Date.UTC(parts[0],parts[1]-1,parts[2]));const day=new Intl.DateTimeFormat("en",{timeZone:"UTC",weekday:"long",month:"long",day:"numeric"}).format(date);return`${day} Â· Local time ${formatTime(apiTime)}`}catch{return`Local time ${formatTime(apiTime)}`}}
+function formatWeekday(date){return new Intl.DateTimeFormat("en",{weekday:"long",timeZone:"UTC"}).format(new Date(`${date}T00:00:00Z`))}function formatShortDate(date){return new Intl.DateTimeFormat("en",{month:"short",day:"numeric",timeZone:"UTC"}).format(new Date(`${date}T00:00:00Z`))}
+function formatVisibility(metres,unit){if(!Number.isFinite(metres))return"â€”";return unit==="imperial"?`${(metres/1609.344).toFixed(1)} mi`:`${(metres/1000).toFixed(1)} km`}
+function formatUv(value){const n=Math.round(value*10)/10;if(n<3)return`${n} low`;if(n<6)return`${n} moderate`;if(n<8)return`${n} high`;if(n<11)return`${n} very high`;return`${n} extreme`}
+function daylightPercentage(current,sunrise,sunset){const minutes=value=>{const[h,m]=value.split("T")[1].split(":").map(Number);return h*60+m};const start=minutes(sunrise),end=minutes(sunset),now=minutes(current);return Math.max(0,Math.min(100,(now-start)/(end-start)*100))}
+function escapeHtml(value){return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function openSidebar(){elements.sidebar.classList.add("open");elements.scrim.hidden=false;elements.menuButton.setAttribute("aria-expanded","true");document.querySelector("#sidebar-close").focus()}function closeSidebar(){elements.sidebar.classList.remove("open");elements.scrim.hidden=true;elements.menuButton.setAttribute("aria-expanded","false")}
 
-    const currentTime = new Date().toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    });
-    currentTimeElement.innerHTML = currentTime;
+let searchTimer;elements.searchInput.addEventListener("input",()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>searchLocations(elements.searchInput.value),280)});elements.searchInput.addEventListener("keydown",event=>{if(elements.searchResults.hidden||!state.suggestions.length)return;if(event.key==="ArrowDown"||event.key==="ArrowUp"){event.preventDefault();const delta=event.key==="ArrowDown"?1:-1;state.activeSuggestion=(state.activeSuggestion+delta+state.suggestions.length)%state.suggestions.length;renderSearchResults()}else if(event.key==="Enter"&&state.activeSuggestion>=0){event.preventDefault();chooseSuggestion(state.activeSuggestion)}else if(event.key==="Escape")closeSearchResults()});
+elements.searchForm.addEventListener("submit",async event=>{event.preventDefault();const query=elements.searchInput.value.trim();if(!query){elements.searchInput.focus();return}if(state.activeSuggestion>=0){chooseSuggestion(state.activeSuggestion);return}const results=await searchLocations(query,false);if(results.length)chooseSuggestion(0);else showStatus(`No place matched â€œ${query}â€. Try a nearby city or postcode.`,true)});elements.searchResults.addEventListener("click",event=>{const option=event.target.closest("[data-index]");if(option)chooseSuggestion(Number(option.dataset.index))});document.addEventListener("click",event=>{if(!elements.searchForm.contains(event.target))closeSearchResults()});
+document.querySelectorAll(".unit-button").forEach(button=>{const active=button.dataset.unit===state.unit;button.classList.toggle("active",active);button.setAttribute("aria-pressed",String(active));button.addEventListener("click",()=>{if(state.unit===button.dataset.unit)return;state.unit=button.dataset.unit;localStorage.setItem("atmos-unit",state.unit);document.querySelectorAll(".unit-button").forEach(item=>{const selected=item.dataset.unit===state.unit;item.classList.toggle("active",selected);item.setAttribute("aria-pressed",String(selected))});loadWeather(state.location,{save:false})})});
+elements.recentList.addEventListener("click",event=>{const button=event.target.closest("[data-recent]");if(!button)return;const location=getRecent()[Number(button.dataset.recent)];if(location)loadWeather(location,{save:false});closeSidebar()});document.querySelector("#location-button").addEventListener("click",useCurrentLocation);document.querySelector("#mobile-location").addEventListener("click",useCurrentLocation);document.querySelector("#refresh-button").addEventListener("click",()=>loadWeather(state.location,{save:false}));elements.menuButton.addEventListener("click",openSidebar);document.querySelector("#sidebar-close").addEventListener("click",closeSidebar);elements.scrim.addEventListener("click",closeSidebar);document.addEventListener("keydown",event=>{if(event.key==="Escape"&&elements.sidebar.classList.contains("open"))closeSidebar()});
+let resizeTimer;window.addEventListener("resize",()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(!state.weather)return;let index=state.weather.hourly.time.findIndex(time=>time>=state.weather.current.time);if(index<0)index=0;renderChart(sliceHourly(state.weather.hourly,index,12),state.weather.current_units.temperature_2m)},120)});
+renderRecent();loadWeather(state.location,{save:false});
 
-    
-    notfound.classList.remove('active');
-    leftContainer.classList.add('active');
-      weather.classList.add('active');
-      container.style.width='60%';
-      container.style.height='550px';
-      leftContainer.style.display = 'grid';
-      searchBar.value = '';
-    }
-
-    let weatherCondtion = data.weather[0].main.toLowerCase();
-    weatherIcon.src = `images/${weatherCondtion}.png`;
-    document.querySelector('.city').innerHTML=data.name+','+data.sys.country;
-    document.querySelector('.temperature').innerHTML=Math.round(data.main.temp)+'°C';
-    document.querySelector('.humidity .value').innerHTML=data.main.humidity+'%';
-    document.querySelector('.visibility .value').innerHTML=data.visibility+'m';
-    document.querySelector('.windspeed .value').innerHTML=Math.round(data.wind.speed)+'m/s';document.querySelector('.pressure .value').innerHTML=data.main.pressure+'hPa';
-    document.querySelector('.feelslike .value').innerHTML=data.main.feels_like+'°C';
-    if(data.main.sea_level == undefined){
-      document.querySelector('.sealevel .value').innerHTML='- -'; 
-    }else{
-      document.querySelector('.sealevel .value').innerHTML=data.main.sea_level+'m';
-    } 
-  }
-
-
-
-function weatherReport(data){
-  let apiurl = `https://api.openweathermap.org/data/2.5/forecast?q=${data.name}&appid=044277adf940989c9c59eb8fb3f84707&units=metric`;
-
-  fetch(apiurl).then(res=>{
-    return res.json();
-  }).then((forecast)=>{
-    console.log(forecast);
-     hourForecast(forecast);
-     dayForecast(forecast)
-  })
-}
-
-function hourForecast(forecast){
-  let hour = ['.hourly.first', '.hourly.second', '.hourly.third', '.hourly.fourth'];
-
-  for(let i = 1; i < 5; i++){
-    var date = new Date(forecast.list[i-1].dt*1000);
-    let time = document.createElement('p');
-    let image = document.createElement('img');
-    let h3 = document.createElement('h3');
-    time.innerHTML = (date.toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric',hour12: true  }));
-    h3.innerHTML=Math.round(forecast.list[i].main.temp)+'°C';
-    let weatherCondtion = forecast.list[i].weather[0].main.toLowerCase();
-    image.src=`images/${weatherCondtion}.png`;
-    document.querySelector(`${hour[i-1]}`).appendChild(time);
-    document.querySelector(`${hour[i-1]}`).appendChild(image);
-    document.querySelector(`${hour[i-1]}`).appendChild(h3);
-  } 
-}
-function dayForecast(forecast){
-  
-    const uniqueDays = [];
-    const fiveDaysForecast = forecast.list.filter(data => {
-      const forecastDate = new Date(data.dt_txt).getDate();
-      if (!uniqueDays.includes(forecastDate)) {
-        uniqueDays.push(forecastDate);
-        return true; 
-      }
-      return false; 
-     });
-     let hour = ['.daily.first','.daily.second', '.daily.third', '.daily.fourth'];
-
-    for(let i = 1; i <5; i++){
-      let time = document.createElement('p');
-      let image = document.createElement('img');
-      let h3 = document.createElement('h3');
-      time.innerHTML =time.innerHTML = new Date(fiveDaysForecast[i].dt_txt).toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' });
-      h3.innerHTML=Math.round(fiveDaysForecast[i].main.temp)+'°C';
-      let weatherCondtion = fiveDaysForecast[i].weather[0].main.toLowerCase();
-      image.src=`images/${weatherCondtion}.png`;
-      document.querySelector(`${hour[i-1]}`).appendChild(time);
-      document.querySelector(`${hour[i-1]}`).appendChild(image);
-      document.querySelector(`${hour[i-1]}`).appendChild(h3);
-    } 
-
-}
-function clearForecastContainers() {
-  let hourlyContainers = ['.hourly.first', '.hourly.second', '.hourly.third', '.hourly.fourth'];
-  let dailyContainers = ['.daily.first', '.daily.second', '.daily.third', '.daily.fourth'];
-
-  // Clear hourly forecast containers
-  hourlyContainers.forEach(container => {
-    document.querySelector(container).innerHTML = '';
-  });
-
-  // Clear daily forecast containers
-  dailyContainers.forEach(container => {
-    document.querySelector(container).innerHTML = '';
-  });
-}
