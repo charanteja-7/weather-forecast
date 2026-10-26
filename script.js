@@ -369,5 +369,21 @@ document.addEventListener("keydown", event => {
 let resizeTimer;
 window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (!state.weather) return; let index = state.weather.hourly.time.findIndex(time => time >= state.weather.current.time); if (index < 0) index = 0; renderChart(sliceHourly(state.weather.hourly, index, 12), temperatureUnit()); }, 140); });
 
+if (window.matchMedia("(pointer: fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  document.querySelectorAll(".glass").forEach(surface => {
+    surface.addEventListener("pointermove", event => {
+      const bounds = surface.getBoundingClientRect();
+      surface.style.setProperty("--glass-x", `${((event.clientX - bounds.left) / bounds.width * 100).toFixed(1)}%`);
+      surface.style.setProperty("--glass-y", `${((event.clientY - bounds.top) / bounds.height * 100).toFixed(1)}%`);
+      surface.classList.add("is-lit");
+    }, { passive: true });
+    surface.addEventListener("pointerleave", () => {
+      surface.classList.remove("is-lit");
+      surface.style.removeProperty("--glass-x");
+      surface.style.removeProperty("--glass-y");
+    });
+  });
+}
+
 renderRecent();
 loadWeather(state.location, { save: false });
