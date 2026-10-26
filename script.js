@@ -351,12 +351,16 @@ elements.recentList.addEventListener("click", event => { const button = event.ta
 document.querySelector("#location-button").addEventListener("click", useCurrentLocation);
 document.querySelector("#mobile-location").addEventListener("click", useCurrentLocation);
 document.querySelector("#refresh-button").addEventListener("click", () => loadWeather(state.location, { save: false }));
-document.querySelector(".mobile-search-trigger").addEventListener("click", focusSearch);
+document.querySelector(".mobile-search-trigger")?.addEventListener("click", focusSearch);
 elements.menuButton.addEventListener("click", openSidebar);
 document.querySelector("#sidebar-close").addEventListener("click", closeSidebar);
 elements.scrim.addEventListener("click", closeSidebar);
 document.addEventListener("keydown", event => {
   if (event.key === "Escape" && elements.sidebar.classList.contains("open")) closeSidebar();
+  if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
+    event.preventDefault();
+    focusSearch();
+  }
   if (event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
     event.preventDefault();
     focusSearch();
