@@ -50,7 +50,7 @@ async function loadWeather(place, { save = true } = {}) {
   state.location = place;
   setLoading(true);
   hideStatus();
-  updateLocationHeading(place, "Loading live weather");
+  updateLocationHeading(place, "Loading live weather\u2026");
   try {
     const data = await fetchJson(forecastUrl(place), controller);
     if (controller !== state.forecastController) return;
@@ -264,7 +264,7 @@ function renderRecent() {
 
 async function useCurrentLocation() {
   if (!navigator.geolocation) { showStatus("Location access is not supported by this browser.", true); return; }
-  showStatus("Finding your location...");
+  showStatus("Finding your location\u2026");
   navigator.geolocation.getCurrentPosition(async position => {
     const fallback = { name: "Current location", admin1: "", country: "", latitude: position.coords.latitude, longitude: position.coords.longitude };
     let place = fallback;
@@ -302,6 +302,11 @@ function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").repla
 function openSidebar() { elements.sidebar.classList.add("open"); elements.scrim.hidden = false; elements.menuButton.setAttribute("aria-expanded", "true"); document.querySelector("#sidebar-close").focus(); }
 function closeSidebar() { elements.sidebar.classList.remove("open"); elements.scrim.hidden = true; elements.menuButton.setAttribute("aria-expanded", "false"); }
 
+function focusSearch() {
+  elements.searchInput.focus({ preventScroll: true });
+  elements.searchForm.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+}
+
 let searchTimer;
 elements.searchInput.addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => searchLocations(elements.searchInput.value), 320); });
 elements.searchInput.addEventListener("keydown", event => {
@@ -312,11 +317,12 @@ elements.searchInput.addEventListener("keydown", event => {
 });
 elements.searchForm.addEventListener("submit", async event => {
   event.preventDefault();
+  clearTimeout(searchTimer);
   const query = elements.searchInput.value.trim();
   if (!query) { elements.searchInput.focus(); return; }
   if (state.activeSuggestion >= 0) { chooseSuggestion(state.activeSuggestion); return; }
   closeSearchResults();
-  showStatus("Searching city and local map data...");
+  showStatus("Searching city and local map data\u2026");
   let results = await searchLocations(query, false);
   if (!results.length) results = await searchLocalPlaces(query);
   else if (/^\d{6}$/.test(query) || results.every(item => item.name.toLowerCase() !== query.toLowerCase())) {
@@ -345,10 +351,17 @@ elements.recentList.addEventListener("click", event => { const button = event.ta
 document.querySelector("#location-button").addEventListener("click", useCurrentLocation);
 document.querySelector("#mobile-location").addEventListener("click", useCurrentLocation);
 document.querySelector("#refresh-button").addEventListener("click", () => loadWeather(state.location, { save: false }));
+document.querySelector(".mobile-search-trigger").addEventListener("click", focusSearch);
 elements.menuButton.addEventListener("click", openSidebar);
 document.querySelector("#sidebar-close").addEventListener("click", closeSidebar);
 elements.scrim.addEventListener("click", closeSidebar);
-document.addEventListener("keydown", event => { if (event.key === "Escape" && elements.sidebar.classList.contains("open")) closeSidebar(); });
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && elements.sidebar.classList.contains("open")) closeSidebar();
+  if (event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+    event.preventDefault();
+    focusSearch();
+  }
+});
 let resizeTimer;
 window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (!state.weather) return; let index = state.weather.hourly.time.findIndex(time => time >= state.weather.current.time); if (index < 0) index = 0; renderChart(sliceHourly(state.weather.hourly, index, 12), temperatureUnit()); }, 140); });
 
