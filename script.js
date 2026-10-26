@@ -354,4 +354,3 @@ window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer
 
 renderRecent();
 loadWeather(state.location, { save: false });
-
